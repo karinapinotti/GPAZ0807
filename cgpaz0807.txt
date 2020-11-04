@@ -1,0 +1,396 @@
+      *---------------------------------------------------------------*
+      *                                                               *
+      *   OBJETIVO: IMPRIMIR RELATORIO COM A MOVIMENTACAO DO ESTOQUE  *
+      *                                                               *
+      *---------------------------------------------------------------*
+      *---------------------------------------------------------------*
+       IDENTIFICATION                      DIVISION.
+      *---------------------------------------------------------------*
+       PROGRAM-ID.                         GPAZ0807.
+       AUTHOR.                             KARINA.
+       DATE-WRITTEN.                       21/09/2020.
+       DATE-COMPILED.                      21/09/2020.
+       SECURITY.                           NENHUMA.
+      *---------------------------------------------------------------*
+       ENVIRONMENT                         DIVISION.
+      *---------------------------------------------------------------*
+       CONFIGURATION                       SECTION.
+       SOURCE-COMPUTER.                    NOTEBRQ.
+       OBJECT-COMPUTER.                    HERCULES01.
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+      *
+       INPUT-OUTPUT                        SECTION.
+       FILE-CONTROL.
+           SELECT MOVTOEST ASSIGN          TO UT-S-MOVTOEST
+           ORGANIZATION IS SEQUENTIAL
+           ACCESS MODE IS SEQUENTIAL
+           FILE STATUS IS FS-MOVTOEST
+           .
+           SELECT RELMOV01 ASSIGN          TO UT-S-RELMOV01
+           ORGANIZATION IS SEQUENTIAL
+           ACCESS MODE IS SEQUENTIAL
+           FILE STATUS IS FS-RELMOV01
+           .
+      *---------------------------------------------------------------*
+       DATA                                DIVISION.
+      *---------------------------------------------------------------*
+       FILE                                SECTION.
+       FD  MOVTOEST
+           LABEL RECORD STANDARD
+           BLOCK CONTAINS 0 RECORDS
+           RECORDING MODE IS F
+           RECORD CONTAINS 35 CHARACTERS
+           DATA RECORD IS REG-MOVTOEST
+           .
+           COPY ESTOQUE REPLACING ==:XX-:== BY ====.
+      *
+       FD  RELMOV01
+           LABEL RECORD OMITTED
+           RECORDING MODE IS F
+           RECORD CONTAINS 80 CHARACTERS
+           DATA RECORD IS REG-RELMOV01
+           .
+       01  REG-RELMOV01                    PIC X(80).
+      *---------------------------------------------------------------*
+       WORKING-STORAGE                     SECTION.
+      *---------------------------------------------------------------*
+           COPY ESTOQUE REPLACING ==:XX-:== BY ==WS-==.
+       01  WS-REG-RELMOV01                 PIC X(80).
+           COPY VARTEMPO.
+           COPY VARDATA.
+      *
+           COPY VARDATAC.
+           COPY VARTEMPC.
+      *==> VARIAVEIS DE CABECALHO
+       01  WS-CABEC1.
+           05 WS-DATA-CABEC1               PIC X(10).
+           05 FILLER                       PIC X(16)
+                                                   VALUE SPACES.
+           05 WS-TITULO-CABEC1             PIC X(30)
+                                                   VALUE
+              " ** BOX COMPANY DO BRASIL **  ".
+           05 FILLER                       PIC X(16)
+                                                   VALUE SPACES.
+           05 WS-HORA-CABEC1               PIC X(08).
+       01  WS-CABEC2.
+           05 WS-TEXTO-CABEC2              PIC X(40)
+                                                   VALUE
+           "RELATORIO DE MOVIMENTACAO DE ESTOQUE    ".
+           05 FILLER                       PIC X(30)
+                                                   VALUE SPACES.
+           05 FILLER                       PIC X(6)
+                                                  VALUE
+           "PAG. ".
+           05 WS-PAG-CABEC2                PIC Z9.
+           05 FILLER                       PIC X(2)
+                                                   VALUE SPACES.
+       01  WS-CABEC3                       PIC X(80)
+                                                   VALUE ALL "-".
+       01  WS-CABEC4.
+           05 FILLER                       PIC X(40)
+                                                   VALUE
+           "          NUMERO        DATA          HO".
+           05 FILLER                       PIC X(40)
+                                                   VALUE
+           "RA        PRODUTO    QUANTIDADE".
+       01  WS-CABEC5.
+           05 FILLER                       PIC X(40)
+                                                   VALUE
+           "          ----------    ----------    --".
+           05 FILLER                       PIC X(40)
+                                                   VALUE
+           "------    -------    -----------".
+      *==> VARIAVEIS DE DETALHE
+       01  WS-LINDET.
+           05 FILLER                       PIC X(10)
+                                                   VALUE SPACES.
+           05 LD-NUMMOVTO                  PIC 99.999.999.
+           05 FILLER                       PIC X(04)
+                                                   VALUE SPACES.
+           05 LD-DATAMOVTO                 PIC X(10).
+           05 FILLER                       PIC X(04)
+                                                   VALUE SPACES.
+           05 LD-HORAMOVTO                 PIC X(08).
+           05 FILLER                       PIC X(04)
+                                                   VALUE SPACES.
+           05 LD-CODPRODMOVTO              PIC 9999.
+           05 FILLER                       PIC X(07)
+                                                   VALUE SPACES.
+           05 LD-QTDMOVTO                  PIC ZZ.ZZZ.ZZ9+.
+           05 FILLER                       PIC X(07)
+                                                   VALUE SPACES.
+      *==> VARIAVEIS DE RODAPE
+       01  WS-RODAPE1                      PIC X(80)
+                                                   VALUE ALL "-".
+       01  WS-RODAPE2.
+           05 FILLER                       PIC X(40)
+                                                   VALUE
+           "APOS O USO UTILIZE ESTE PAPEL COMO RASCU".
+           05 FILLER                       PIC X(40)
+                                                   VALUE
+           "NHO                  RECICLE SUAS IDEIAS".
+      *
+      *==> VARIAVEIS DE FILE STATUS
+       77  WS-MSG                          PIC X(60).
+       77  WS-FS                           PIC X(02).
+       77  WS-PULA                         PIC 9(02).
+      *==> FLAGS DE STATUS
+       01  FS-MOVTOEST                     PIC X(02).
+           88 SUCESSO-M                            VALUE "00".
+           88 FIMARQUIVO-M                         VALUE "10".
+       01  FS-RELMOV01                     PIC X(02).
+           88 SUCESSO-R                            VALUE "00".
+           88 FIMARQUIVO-R                         VALUE "10".
+      *==> MENSAGENS DE ERRO
+       77  WS-MSG01                        PIC X(60)
+                                                   VALUE
+           "ERRO ABERTURA MOVTOEST".
+       77  WS-MSG02                        PIC X(60)
+                                                   VALUE
+           "ERRO LER MOVTOEST".
+       77  WS-MSG03                        PIC X(60)
+                                                   VALUE
+           "ERRO ABERTURA RELMOV01".
+       77  WS-MSG04                        PIC X(60)
+                                                   VALUE
+           "ERRO LER MOVTOEST".
+       77  WS-MSG05                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-CABEC1".
+       77  WS-MSG06                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-CABEC2".
+       77  WS-MSG07                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-CABEC3".
+       77  WS-MSG08                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-CABEC4".
+       77  WS-MSG09                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-CABEC5".
+       77  WS-MSG10                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-LINDET".
+       77  WS-MSG11                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-RODAPE1".
+       77  WS-MSG12                        PIC X(60)
+                                                   VALUE
+           "ERRO IMPRESSAO WS-RODAPE2".
+       77  WS-MSG13                        PIC X(60)
+                                                   VALUE
+           "ERRO FECHAMENTO MOVTOEST".
+       77  WS-MSG14                        PIC X(60)
+                                                   VALUE
+           "ERRO FECHAMENTO RELMOV01".
+      *==> VARIAVEIS DE CONTADORES
+       77  WS-REGLIDO                      PIC 9(02).
+       77  WS-PAGINA                       PIC 9(02).
+       77  WS-REGIMP                       PIC 9(02).
+       77  WS-CT-LINHA                     PIC 9(02).
+      *==> VARIAVEIS DE CONTADORES FORMATADAS
+       77  WS-REGLIDO-F                    PIC Z9.
+       77  WS-PAGINA-F                     PIC Z9.
+       77  WS-REGIMP-F                     PIC Z9.
+       77  WS-CT-LINHA-F                   PIC Z9.
+      *---------------------------------------------------------------*
+       PROCEDURE                           DIVISION.
+      *---------------------------------------------------------------*
+       0000-GPAZ0807.
+           PERFORM 1000-INICIALIZAR
+           PERFORM 2000-PROCESSAR
+                 UNTIL FIMARQUIVO-M
+           PERFORM 3000-TERMINO
+           STOP RUN
+           .
+      *---------------------------------------------------------------*
+       1000-INICIALIZAR.
+           ACCEPT WS-HORARIO-INICIAL FROM TIME
+      *
+           ACCEPT WS-HORA-CABEC FROM TIME
+           ACCEPT WS-DATA-CABEC-S FROM DATE
+           MOVE 0                          TO WS-REGLIDO
+                                              WS-PAGINA
+                                              WS-REGIMP
+           MOVE 99                         TO WS-CT-LINHA
+           OPEN INPUT MOVTOEST
+           IF NOT SUCESSO-M
+              MOVE WS-MSG01                TO WS-MSG
+              MOVE FS-MOVTOEST             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           PERFORM 1100-LER-MOVTOEST
+           IF FIMARQUIVO-M
+              MOVE WS-MSG02                TO WS-MSG
+              MOVE FS-MOVTOEST             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           OPEN OUTPUT RELMOV01
+           IF NOT SUCESSO-R
+              MOVE WS-MSG03                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           .
+      *---------------------------------------------------------------*
+       1100-LER-MOVTOEST.
+           READ MOVTOEST INTO WS-REG-MOVTOEST
+           IF SUCESSO-M
+              ADD 1                        TO WS-REGLIDO
+           ELSE
+              IF NOT FIMARQUIVO-M
+                 MOVE WS-MSG04             TO WS-MSG
+                 MOVE FS-MOVTOEST          TO WS-FS
+                 PERFORM 9999-ERRO
+              END-IF
+           END-IF
+           .
+      *---------------------------------------------------------------*
+       2000-PROCESSAR.
+           IF WS-CT-LINHA > 49
+              PERFORM 2100-IMPRIME-CABECALHO
+           END-IF
+      *
+           PERFORM 2200-IMPRIME-DETALHE
+           IF WS-CT-LINHA = 48
+              PERFORM 2300-IMPRIME-RODAPE
+           END-IF
+      *
+           PERFORM 1100-LER-MOVTOEST
+           .
+      *---------------------------------------------------------------*
+       2100-IMPRIME-CABECALHO.
+           MOVE CORRESPONDING WS-DATA-CABEC-S TO WS-DATA-CABEC-F
+           MOVE CORRESPONDING WS-HORA-CABEC   TO WS-HORA-CABEC-F
+           MOVE WS-DATA-CABEC-F            TO WS-DATA-CABEC1
+           MOVE WS-HORA-CABEC-F            TO WS-HORA-CABEC1
+      *
+           ADD 1                           TO WS-PAGINA
+           MOVE WS-PAGINA                  TO WS-PAG-CABEC2
+      *
+           WRITE REG-RELMOV01 FROM WS-CABEC1 AFTER PAGE
+           IF NOT SUCESSO-R
+              MOVE WS-MSG05                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+      *
+           WRITE REG-RELMOV01 FROM WS-CABEC2
+           IF NOT SUCESSO-R
+              MOVE WS-MSG06                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           WRITE REG-RELMOV01 FROM WS-CABEC3
+           IF NOT SUCESSO-R
+              MOVE WS-MSG07                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           WRITE REG-RELMOV01 FROM WS-CABEC4
+           IF NOT SUCESSO-R
+              MOVE WS-MSG08                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           WRITE REG-RELMOV01 FROM WS-CABEC5
+           IF NOT SUCESSO-R
+              MOVE WS-MSG09                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+      *
+           MOVE 5                          TO WS-CT-LINHA
+           .
+      *---------------------------------------------------------------*
+       2200-IMPRIME-DETALHE.
+      * DATA E HORA DO RELATORIO
+           MOVE CORRESPONDING WS-HORAMOVTO TO WS-HORAMOVTO-F
+           MOVE CORRESPONDING WS-DATAMOVTO TO WS-DATAMOVTO-F
+      *
+           MOVE WS-NUMMOVTO                TO LD-NUMMOVTO
+           MOVE WS-DATAMOVTO-F             TO LD-DATAMOVTO
+           MOVE WS-HORAMOVTO-F             TO LD-HORAMOVTO
+           MOVE WS-CODPRODMOVTO            TO LD-CODPRODMOVTO
+           IF WS-TIPOMOVTO = "E"
+              MOVE WS-QTDMOVTO             TO LD-QTDMOVTO
+           ELSE
+              COMPUTE LD-QTDMOVTO = WS-QTDMOVTO * -1
+           END-IF
+      *
+           WRITE REG-RELMOV01 FROM WS-LINDET
+           IF NOT SUCESSO-R
+              MOVE WS-MSG10                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           ADD 1                           TO WS-CT-LINHA
+           ADD 1                           TO WS-REGIMP
+           .
+      *---------------------------------------------------------------*
+       2300-IMPRIME-RODAPE.
+           COMPUTE WS-PULA = 48 - WS-CT-LINHA
+      *
+           WRITE REG-RELMOV01 FROM WS-RODAPE1 AFTER WS-PULA LINES
+           IF NOT SUCESSO-R
+              MOVE WS-MSG11                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           WRITE REG-RELMOV01 FROM WS-RODAPE2
+           IF NOT SUCESSO-R
+              MOVE WS-MSG12                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+      *
+           MOVE 50 TO WS-CT-LINHA
+           .
+      *---------------------------------------------------------------*
+       3000-TERMINO.
+           PERFORM 9000-IMPRIME-DATA
+      *
+           IF WS-CT-LINHA < 50
+              PERFORM 2300-IMPRIME-RODAPE
+           END-IF
+      *
+           CLOSE MOVTOEST
+           IF NOT SUCESSO-M
+              MOVE WS-MSG13                TO WS-MSG
+              MOVE FS-MOVTOEST             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+           CLOSE RELMOV01
+           IF NOT SUCESSO-R
+              MOVE WS-MSG14                TO WS-MSG
+              MOVE FS-RELMOV01             TO WS-FS
+              PERFORM 9999-ERRO
+           END-IF
+      *
+           ACCEPT WS-HORARIO-FINAL FROM TIME
+           COPY CALCTEMP.
+      *
+           MOVE WS-REGLIDO                 TO WS-REGLIDO-F
+           MOVE WS-PAGINA                  TO WS-PAGINA-F
+           MOVE WS-REGIMP                  TO WS-REGIMP-F
+           MOVE WS-CT-LINHA                TO WS-CT-LINHA-F
+      *
+           DISPLAY "=================================================="
+           DISPLAY "              BOX COMPANY DO BRASIL         "
+           DISPLAY "=================================================="
+           DISPLAY "TOTAL DE MOVIMENTOS LIDOS.................: "
+                                                     WS-REGLIDO-F
+           DISPLAY "TOTAL DE PAGINAS IMPRESSAS................: "
+                                                      WS-PAGINA-F
+           DISPLAY "TOTAL DE MOVIMENTOS IMPRESSOS.............: "
+                                                      WS-REGIMP-F
+           DISPLAY "=================================================="
+           DISPLAY "TEMPO TOTAL DE PROCESSAMENTO...........: "
+                                         WS-TEMPO-PROCESSAMENTO-F
+           DISPLAY "=================================================="
+           .
+           COPY ROTDATA.
+           COPY ROTERRO.
+      *---------------------------------------------------------------*
